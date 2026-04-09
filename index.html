@@ -1,0 +1,112 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardápio Digital</title>
+    <link rel="stylesheet" href="./assets/style.css">
+</head>
+<body class="public-page">
+    <header class="site-header">
+        <div class="container header-content">
+            <div class="brand-lockup">
+                <img class="brand-mark" src="./assets/la-mafia-dei-dolci-logo.png" alt="Logo La Mafia dei Dolci">
+                <div class="brand-copy">
+                    <p class="eyebrow">Vitrine Online</p>
+                    <h1 id="restaurant-name">Cardápio Digital</h1>
+                </div>
+            </div>
+            <nav class="top-nav">
+                <a class="nav-link active" href="./index.html">Cardápio</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container page-stack">
+        <section class="hero-card">
+            <div class="hero-copy">
+                <p class="eyebrow">La Mafia dei Dolci</p>
+                <h2>Escolha seus doces, envie o pedido da mesa e acompanhe tudo pelo número gerado.</h2>
+                <p>Uma vitrine com cara de marca: navegue pelo cardápio, monte o carrinho e finalize seu pedido em poucos passos.</p>
+            </div>
+            <div class="hero-side">
+                <img class="hero-logo" src="./assets/la-mafia-dei-dolci-logo.png" alt="Arte da La Mafia dei Dolci">
+                <a id="whatsapp-button" class="button button-secondary" href="#" target="_blank" rel="noopener noreferrer">
+                    Suporte pelo WhatsApp
+                </a>
+            </div>
+        </section>
+
+        <p id="menu-status" class="status-message hidden"></p>
+        <p id="order-feedback" class="status-message hidden"></p>
+
+        <section class="catalog-layout">
+            <div>
+                <section id="menu-container" class="menu-container"></section>
+            </div>
+
+            <aside class="cart-panel">
+                <div class="panel-header">
+                    <p class="section-kicker">Novo pedido</p>
+                    <h2>Seu carrinho</h2>
+                    <p>Adicione itens do cardápio e envie direto pelo site.</p>
+                </div>
+
+                <div id="cart-items" class="cart-items"></div>
+
+                <div class="cart-summary">
+                    <div class="cart-total-row">
+                        <span>Total</span>
+                        <strong id="cart-total">R$ 0,00</strong>
+                    </div>
+                </div>
+
+                <form id="order-form" class="form-grid compact-form">
+                    <label class="form-field">
+                        <span>Nome do cliente</span>
+                        <input id="customer_name" name="customer_name" type="text" placeholder="Seu nome" required>
+                    </label>
+
+                    <label class="form-field">
+                        <span>Mesa</span>
+                        <input id="table_number" name="table_number" type="text" placeholder="Ex.: 08" required>
+                    </label>
+
+                    <label class="form-field form-field-full">
+                        <span>Observações</span>
+                        <textarea id="order_notes" name="order_notes" rows="3" placeholder="Sem cebola, ponto da carne, etc."></textarea>
+                    </label>
+
+                    <div class="form-actions">
+                        <button id="submit-order-button" class="button button-primary" type="submit">Enviar pedido</button>
+                    </div>
+                </form>
+            </aside>
+        </section>
+
+        <section class="panel order-lookup-panel">
+            <div class="panel-header">
+                <p class="section-kicker">Acompanhar pedido</p>
+                <h2>Visualizar status</h2>
+                <p>Digite o número do pedido para ver os itens, o total e em que etapa ele está.</p>
+            </div>
+
+            <form id="order-lookup-form" class="lookup-form">
+                <label class="form-field">
+                    <span>Número do pedido</span>
+                    <input id="order_lookup_id" name="order_lookup_id" type="number" min="1" placeholder="Ex.: 15" required>
+                </label>
+                <div class="form-actions">
+                    <button class="button button-secondary" type="submit">Visualizar pedido</button>
+                </div>
+            </form>
+
+            <div id="customer-order-view" class="customer-order-view hidden"></div>
+        </section>
+    </main>
+
+    <script src="./assets/config.js"></script>
+    <script src="./assets/app-static.js"></script>
+</body>
+</html>
+

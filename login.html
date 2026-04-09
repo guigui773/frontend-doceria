@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login da Administração</title>
+    <link rel="stylesheet" href="./assets/style.css">
+</head>
+<body class="login-page">
+    <header class="site-header">
+        <div class="container header-content">
+            <div>
+                <p class="eyebrow">Area administrativa</p>
+                <h1>Login do administrador</h1>
+            </div>
+            <nav class="top-nav">
+                <a class="nav-link" href="./index.html">Voltar ao cardapio</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="login-shell">
+        <section class="login-card">
+            <div class="login-card-content">
+                <p class="eyebrow">Acesso restrito</p>
+                <h1>Painel administrativo</h1>
+                <p class="login-intro">Entre com seu usuário e senha para gerenciar o cardápio.</p>
+
+                <p id="login-feedback" class="status-message hidden"></p>
+
+                <form id="login-form" class="login-form">
+                    <label class="form-field">
+                        <span>Usuário</span>
+                        <input id="username" name="username" type="text" required>
+                    </label>
+
+                    <label class="form-field">
+                        <span>Senha</span>
+                        <input id="password" name="password" type="password" required>
+                    </label>
+
+                    <button id="login-button" class="button button-primary login-button" type="submit">Entrar</button>
+                </form>
+            </div>
+        </section>
+    </main>
+    <script src="./assets/config.js"></script>
+    <script src="./assets/login.js"></script>
+</body>
+</html>
+
+
+

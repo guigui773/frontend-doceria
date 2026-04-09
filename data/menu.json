@@ -1,0 +1,37 @@
+﻿{
+  "restaurant_name": "La Mafia dei Dolci",
+  "whatsapp": "5581983112886",
+  "categories": [
+    {
+      "name": "Bebidas",
+      "items": [
+        {
+          "id": 3,
+          "name": "Refrigerante Lata",
+          "description": "350ml",
+          "price": 6.0,
+          "image": "./assets/img/refrigerante-lata.jpg"
+        },
+        {
+          "id": 4,
+          "name": "Suco Natural",
+          "description": "Copo 300ml",
+          "price": 8.5,
+          "image": "./assets/img/suco-natural.jpg"
+        }
+      ]
+    },
+    {
+      "name": "Doce",
+      "items": [
+        {
+          "id": 5,
+          "name": "Cupcake",
+          "description": "Massa branca com recheio de doce de leite",
+          "price": 14.99,
+          "image": "./assets/img/cupcake.jpg"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+Thumbs.db
+.DS_Store
+
+# Editor files
+.vscode/
+.idea/
+
+# Local environment overrides
+.env
+.env.*

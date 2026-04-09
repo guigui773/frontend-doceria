@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedidos</title>
+    <link rel="stylesheet" href="./assets/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container header-content">
+            <div>
+                <p class="eyebrow">Area administrativa</p>
+                <h1>Pedidos</h1>
+            </div>
+            <nav class="top-nav">
+                <a class="nav-link" href="./admin.html">Cardápio</a>
+                <a class="nav-link active" href="./orders.html">Pedidos</a>
+                <a id="logout-link" class="nav-link" href="./login.html">Sair</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container page-stack">
+        <section class="panel orders-hero">
+            <div class="panel-header">
+                <p class="section-kicker">Acompanhamento em tempo real</p>
+                <h2>Fila de pedidos</h2>
+                <p>Atualize o status dos pedidos conforme eles forem entrando, sendo preparados e entregues.</p>
+            </div>
+            <p id="orders-feedback" class="status-message hidden"></p>
+        </section>
+
+        <section class="order-board">
+            <div class="order-column">
+                <div class="panel-header">
+                    <p class="section-kicker">Entrada</p>
+                    <h2>Novos</h2>
+                </div>
+                <div id="orders-novo" class="orders-column-list"></div>
+            </div>
+
+            <div class="order-column">
+                <div class="panel-header">
+                    <p class="section-kicker">Cozinha</p>
+                    <h2>Em preparo</h2>
+                </div>
+                <div id="orders-em_preparo" class="orders-column-list"></div>
+            </div>
+
+            <div class="order-column">
+                <div class="panel-header">
+                    <p class="section-kicker">Saída</p>
+                    <h2>Prontos</h2>
+                </div>
+                <div id="orders-pronto" class="orders-column-list"></div>
+            </div>
+
+            <div class="order-column">
+                <div class="panel-header">
+                    <p class="section-kicker">Histórico</p>
+                    <h2>Finalizados</h2>
+                </div>
+                <div id="orders-finalizados" class="orders-column-list"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="./assets/config.js"></script>
+    <script src="./assets/orders-static.js"></script>
+</body>
+</html>
+
