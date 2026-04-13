@@ -1,7 +1,6 @@
 (function () {
     var loginForm = document.getElementById("login-form");
     var feedback = document.getElementById("login-feedback");
-    var submitButton = document.getElementById("login-button");
     var usernameInput = document.getElementById("username");
     var passwordInput = document.getElementById("password");
 
@@ -30,9 +29,11 @@
         event.preventDefault();
         clearFeedback();
 
+        var credentials = window.cardapioStore.getAdminCredentials();
+
         if (
-            usernameInput.value.trim() !== window.cardapioConfig.adminUsername ||
-            passwordInput.value.trim() !== window.cardapioConfig.adminPassword
+            usernameInput.value.trim() !== credentials.username ||
+            passwordInput.value.trim() !== credentials.password
         ) {
             showFeedback("Usuário ou senha inválidos.", "error");
             return;

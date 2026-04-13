@@ -441,6 +441,12 @@ p {
     color: var(--primary-dark);
 }
 
+.field-help {
+    color: var(--muted);
+    font-size: 0.86rem;
+    line-height: 1.5;
+}
+
 .form-field-full,
 .form-actions {
     grid-column: 1 / -1;
@@ -471,6 +477,30 @@ textarea:focus {
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
+}
+
+.image-preview {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+}
+
+.image-preview-label {
+    font-weight: 700;
+    color: var(--primary-dark);
+}
+
+.image-preview-thumb {
+    width: min(100%, 220px);
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 18px;
+    border: 1px solid rgba(166, 122, 36, 0.18);
+    background: var(--surface-strong);
 }
 
 .admin-items-list {

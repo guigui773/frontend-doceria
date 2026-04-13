@@ -4,6 +4,7 @@
         menuStorageKey: "doceria_frontend_menu",
         ordersStorageKey: "doceria_frontend_orders",
         sessionStorageKey: "doceria_frontend_session",
+        adminCredentialsStorageKey: "doceria_frontend_admin_credentials",
         adminUsername: "admin",
         adminPassword: "123456"
     };
@@ -73,6 +74,24 @@
         localStorage.removeItem(CONFIG.sessionStorageKey);
     }
 
+    function getDefaultAdminCredentials() {
+        return {
+            username: CONFIG.adminUsername,
+            password: CONFIG.adminPassword
+        };
+    }
+
+    function getAdminCredentials() {
+        return readStorage(CONFIG.adminCredentialsStorageKey, getDefaultAdminCredentials());
+    }
+
+    function saveAdminCredentials(credentials) {
+        writeStorage(CONFIG.adminCredentialsStorageKey, {
+            username: credentials.username,
+            password: credentials.password
+        });
+    }
+
     function getStatusLabel(status) {
         var labels = {
             novo: "Novo",
@@ -95,6 +114,8 @@
         getSession: getSession,
         saveSession: saveSession,
         clearSession: clearSession,
+        getAdminCredentials: getAdminCredentials,
+        saveAdminCredentials: saveAdminCredentials,
         getStatusLabel: getStatusLabel
     };
 })();

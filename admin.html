@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -46,6 +46,30 @@
 
         <section class="panel">
             <div class="panel-header">
+                <p class="section-kicker">Acesso</p>
+                <h2>Login do administrador</h2>
+                <p>Altere o usuário e a senha usados para entrar no painel neste navegador.</p>
+            </div>
+
+            <form id="admin-access-form" class="form-grid">
+                <label class="form-field">
+                    <span>Usuário administrador</span>
+                    <input id="admin_username" name="admin_username" type="text" required>
+                </label>
+
+                <label class="form-field">
+                    <span>Senha administradora</span>
+                    <input id="admin_password" name="admin_password" type="password" required>
+                </label>
+
+                <div class="form-actions">
+                    <button class="button button-secondary" type="submit">Salvar acesso</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
                 <p class="section-kicker">Itens</p>
                 <h2 id="item-form-title">Adicionar item</h2>
                 <p>Cadastre novos produtos ou edite os já existentes.</p>
@@ -75,9 +99,12 @@
                 </label>
 
                 <label class="form-field">
-                    <span>Imagem (URL)</span>
-                    <input id="image" name="image" type="url">
+                    <span>Carregar foto</span>
+                    <input id="image" name="image" type="file" accept="image/*">
+                    <small id="image-help" class="field-help">Selecione uma imagem do seu dispositivo. Ao editar, envie outra foto apenas se quiser trocar a atual.</small>
                 </label>
+
+                <div id="image-preview" class="image-preview hidden"></div>
 
                 <div class="form-actions">
                     <button id="save-item-button" class="button button-primary" type="submit">Adicionar item</button>
@@ -102,4 +129,3 @@
     <script src="./assets/admin-static.js"></script>
 </body>
 </html>
-

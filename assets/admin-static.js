@@ -1,5 +1,6 @@
 (function () {
     var settingsForm = document.getElementById("settings-form");
+    var adminAccessForm = document.getElementById("admin-access-form");
     var itemForm = document.getElementById("item-form");
     var itemFormTitle = document.getElementById("item-form-title");
     var saveItemButton = document.getElementById("save-item-button");
@@ -10,14 +11,18 @@
 
     var restaurantNameInput = document.getElementById("restaurant_name");
     var whatsappInput = document.getElementById("whatsapp");
+    var adminUsernameInput = document.getElementById("admin_username");
+    var adminPasswordInput = document.getElementById("admin_password");
     var itemIdInput = document.getElementById("item_id");
     var categoryInput = document.getElementById("category");
     var nameInput = document.getElementById("name");
     var descriptionInput = document.getElementById("description");
     var priceInput = document.getElementById("price");
     var imageInput = document.getElementById("image");
+    var imagePreview = document.getElementById("image-preview");
 
     var currentMenu = null;
+    var editingImageValue = "";
 
     function ensureAuthenticated() {
         var session = window.cardapioStore.getSession();
@@ -64,12 +69,34 @@
         });
     }
 
+    function renderImagePreview(imageValue) {
+        if (!imageValue) {
+            imagePreview.innerHTML = "";
+            imagePreview.classList.add("hidden");
+            return;
+        }
+
+        imagePreview.innerHTML = [
+            '<span class="image-preview-label">Prévia da foto</span>',
+            '<img class="image-preview-thumb" src="' + imageValue + '" alt="Prévia da imagem do item">'
+        ].join("");
+        imagePreview.classList.remove("hidden");
+    }
+
     function resetItemForm() {
         itemForm.reset();
         itemIdInput.value = "";
+        editingImageValue = "";
         itemFormTitle.textContent = "Adicionar item";
         saveItemButton.textContent = "Adicionar item";
         cancelEditButton.classList.add("hidden");
+        renderImagePreview("");
+    }
+
+    function fillAccessForm() {
+        var credentials = window.cardapioStore.getAdminCredentials();
+        adminUsernameInput.value = credentials.username || "";
+        adminPasswordInput.value = credentials.password || "";
     }
 
     function getNextItemId() {
@@ -114,6 +141,7 @@
     function fillForms(menu) {
         restaurantNameInput.value = menu.restaurant_name || "";
         whatsappInput.value = menu.whatsapp || "";
+        fillAccessForm();
         renderItems(menu);
     }
 
@@ -124,39 +152,106 @@
     function saveSettings(event) {
         event.preventDefault();
         clearFeedback();
+
         currentMenu.restaurant_name = restaurantNameInput.value.trim();
         currentMenu.whatsapp = whatsappInput.value.trim();
         saveMenu();
         showFeedback("Configurações salvas no navegador com sucesso.", "success");
     }
 
-    function saveItem(event) {
+    function saveAdminAccess(event) {
         event.preventDefault();
         clearFeedback();
 
+        var username = adminUsernameInput.value.trim();
+        var password = adminPasswordInput.value.trim();
+
+        if (!username || !password) {
+            showFeedback("Informe usuário e senha para salvar o acesso.", "error");
+            return;
+        }
+
+        window.cardapioStore.saveAdminCredentials({
+            username: username,
+            password: password
+        });
+
+        showFeedback("Acesso do administrador atualizado com sucesso.", "success");
+    }
+
+    function readSelectedImage() {
+        return new Promise(function (resolve, reject) {
+            var selectedFile = imageInput.files && imageInput.files[0];
+
+            if (!selectedFile) {
+                resolve(editingImageValue || "");
+                return;
+            }
+
+            if (!selectedFile.type || selectedFile.type.indexOf("image/") !== 0) {
+                reject(new Error("Selecione um arquivo de imagem válido."));
+                return;
+            }
+
+            var reader = new FileReader();
+
+            reader.onload = function () {
+                resolve(reader.result || "");
+            };
+
+            reader.onerror = function () {
+                reject(new Error("Não foi possível carregar a imagem selecionada."));
+            };
+
+            reader.readAsDataURL(selectedFile);
+        });
+    }
+
+    async function saveItem(event) {
+        event.preventDefault();
+        clearFeedback();
+
+        var category = categoryInput.value.trim();
+        var name = nameInput.value.trim();
         var itemId = Number(itemIdInput.value.trim() || getNextItemId());
+        var price = Number(priceInput.value);
+
+        if (!category || !name || Number.isNaN(price) || price < 0) {
+            showFeedback("Preencha categoria, nome e um preço válido.", "error");
+            return;
+        }
+
+        var imageValue;
+
+        try {
+            imageValue = await readSelectedImage();
+        } catch (error) {
+            showFeedback(error.message || "Erro ao carregar a foto do item.", "error");
+            return;
+        }
+
         var itemPayload = {
             id: itemId,
-            category: categoryInput.value.trim(),
-            name: nameInput.value.trim(),
+            category: category,
+            name: name,
             description: descriptionInput.value.trim(),
-            price: Number(priceInput.value),
-            image: imageInput.value.trim()
+            price: price,
+            image: imageValue
         };
 
-        currentMenu.categories = currentMenu.categories.map(function (category) {
+        currentMenu.categories = currentMenu.categories.map(function (entry) {
             return {
-                name: category.name,
-                items: category.items.filter(function (item) {
+                name: entry.name,
+                items: entry.items.filter(function (item) {
                     return String(item.id) !== String(itemId);
                 })
             };
-        }).filter(function (category) {
-            return category.items.length > 0;
+        }).filter(function (entry) {
+            return entry.items.length > 0;
         });
 
-        var targetCategory = currentMenu.categories.find(function (category) {
-            return category.name === itemPayload.category;
+        var targetCategory = currentMenu.categories.find(function (entry) {
+            return entry.name.toLowerCase() === itemPayload.category.toLowerCase();
         });
 
         if (!targetCategory) {
@@ -167,11 +262,22 @@
             currentMenu.categories.push(targetCategory);
         }
 
-        targetCategory.items.push(itemPayload);
+        targetCategory.items.push({
+            id: itemPayload.id,
+            name: itemPayload.name,
+            description: itemPayload.description,
+            price: itemPayload.price,
+            image: itemPayload.image
+        });
+
+        currentMenu.categories.sort(function (a, b) {
+            return a.name.localeCompare(b.name, "pt-BR");
+        });
+
         saveMenu();
         fillForms(currentMenu);
         resetItemForm();
-        showFeedback("Item salvo no JSON local do navegador.", "success");
+        showFeedback("Item salvo com sucesso na administração.", "success");
     }
 
     function startEdit(itemId) {
@@ -189,7 +295,9 @@
         nameInput.value = item.name;
         descriptionInput.value = item.description || "";
         priceInput.value = item.price;
-        imageInput.value = item.image || "";
+        imageInput.value = "";
+        editingImageValue = item.image || "";
+        renderImagePreview(editingImageValue);
         itemFormTitle.textContent = "Editar item";
         saveItemButton.textContent = "Salvar alterações";
         cancelEditButton.classList.remove("hidden");
@@ -201,15 +309,15 @@
             return;
         }
 
-        currentMenu.categories = currentMenu.categories.map(function (category) {
+        currentMenu.categories = currentMenu.categories.map(function (entry) {
             return {
-                name: category.name,
-                items: category.items.filter(function (item) {
+                name: entry.name,
+                items: entry.items.filter(function (item) {
                     return String(item.id) !== String(itemId);
                 })
             };
-        }).filter(function (category) {
-            return category.items.length > 0;
+        }).filter(function (entry) {
+            return entry.items.length > 0;
         });
 
         saveMenu();
@@ -236,17 +344,51 @@
         clearFeedback();
     });
 
+    imageInput.addEventListener("change", function () {
+        var selectedFile = imageInput.files && imageInput.files[0];
+
+        if (!selectedFile) {
+            renderImagePreview(editingImageValue);
+            return;
+        }
+
+        if (!selectedFile.type || selectedFile.type.indexOf("image/") !== 0) {
+            imageInput.value = "";
+            renderImagePreview(editingImageValue);
+            showFeedback("Selecione um arquivo de imagem válido.", "error");
+            return;
+        }
+
+        var reader = new FileReader();
+
+        reader.onload = function () {
+            clearFeedback();
+            renderImagePreview(reader.result || "");
+        };
+
+        reader.onerror = function () {
+            imageInput.value = "";
+            renderImagePreview(editingImageValue);
+            showFeedback("Não foi possível carregar a prévia da imagem.", "error");
+        };
+
+        reader.readAsDataURL(selectedFile);
+    });
+
     logoutLink.addEventListener("click", function () {
         window.cardapioStore.clearSession();
     });
 
     settingsForm.addEventListener("submit", saveSettings);
+    adminAccessForm.addEventListener("submit", saveAdminAccess);
     itemForm.addEventListener("submit", saveItem);
 
     ensureAuthenticated();
     window.cardapioStore.getMenu().then(function (menu) {
         currentMenu = menu;
         fillForms(menu);
-        showFeedback("Painel carregado em modo estático.", "success");
+        showFeedback("Painel carregado com sucesso.", "success");
+    }).catch(function (error) {
+        showFeedback(error.message || "Erro ao carregar o painel.", "error");
     });
 })();
