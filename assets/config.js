@@ -36,28 +36,40 @@
     }
 
     async function loadDefaultMenu() {
-        var response = await fetch(CONFIG.menuUrl);
+        var response = await fetch(CONFIG.menuUrl, { cache: "no-store" });
         if (!response.ok) {
-            throw new Error("Não foi possível carregar o menu estático.");
+            throw new Error("Nao foi possivel carregar o menu estatico.");
         }
 
         return response.json();
     }
 
+    function getMenuVersion(menu) {
+        return String(menu && menu.menu_version ? menu.menu_version : "");
+    }
+
     async function getMenu() {
         var savedMenu = readStorage(CONFIG.menuStorageKey, null);
-        if (savedMenu) {
-            return savedMenu;
+        var defaultMenu = await loadDefaultMenu();
+        var defaultVersion = getMenuVersion(defaultMenu);
+        var savedVersion = getMenuVersion(savedMenu);
+
+        if (!savedMenu) {
+            writeStorage(CONFIG.menuStorageKey, defaultMenu);
+            return clone(defaultMenu);
         }
 
-        var defaultMenu = await loadDefaultMenu();
-        writeStorage(CONFIG.menuStorageKey, defaultMenu);
-        return clone(defaultMenu);
+        if (defaultVersion && defaultVersion !== savedVersion) {
+            writeStorage(CONFIG.menuStorageKey, defaultMenu);
+            return clone(defaultMenu);
+        }
+
+        return savedMenu;
     }
 
     function saveMenu(menu) {
         if (!writeStorage(CONFIG.menuStorageKey, menu)) {
-            throw new Error("Não foi possível salvar o cardápio no navegador. Reduza o tamanho das imagens e tente novamente.");
+            throw new Error("Nao foi possivel salvar o cardapio no navegador. Reduza o tamanho das imagens e tente novamente.");
         }
     }
 
@@ -67,7 +79,7 @@
 
     function saveOrders(orders) {
         if (!writeStorage(CONFIG.ordersStorageKey, orders)) {
-            throw new Error("Não foi possível salvar os pedidos no navegador.");
+            throw new Error("Nao foi possivel salvar os pedidos no navegador.");
         }
     }
 
@@ -99,7 +111,7 @@
             username: credentials.username,
             password: credentials.password
         })) {
-            throw new Error("Não foi possível salvar as credenciais do administrador no navegador.");
+            throw new Error("Nao foi possivel salvar as credenciais do administrador no navegador.");
         }
     }
 
