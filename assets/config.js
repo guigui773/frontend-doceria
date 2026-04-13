@@ -27,7 +27,12 @@
     }
 
     function writeStorage(key, value) {
-        localStorage.setItem(key, JSON.stringify(value));
+        try {
+            localStorage.setItem(key, JSON.stringify(value));
+            return true;
+        } catch (error) {
+            return false;
+        }
     }
 
     async function loadDefaultMenu() {
@@ -51,7 +56,9 @@
     }
 
     function saveMenu(menu) {
-        writeStorage(CONFIG.menuStorageKey, menu);
+        if (!writeStorage(CONFIG.menuStorageKey, menu)) {
+            throw new Error("Não foi possível salvar o cardápio no navegador. Reduza o tamanho das imagens e tente novamente.");
+        }
     }
 
     function getOrders() {
@@ -59,7 +66,9 @@
     }
 
     function saveOrders(orders) {
-        writeStorage(CONFIG.ordersStorageKey, orders);
+        if (!writeStorage(CONFIG.ordersStorageKey, orders)) {
+            throw new Error("Não foi possível salvar os pedidos no navegador.");
+        }
     }
 
     function getSession() {
@@ -86,10 +95,12 @@
     }
 
     function saveAdminCredentials(credentials) {
-        writeStorage(CONFIG.adminCredentialsStorageKey, {
+        if (!writeStorage(CONFIG.adminCredentialsStorageKey, {
             username: credentials.username,
             password: credentials.password
-        });
+        })) {
+            throw new Error("Não foi possível salvar as credenciais do administrador no navegador.");
+        }
     }
 
     function getStatusLabel(status) {

@@ -23,6 +23,8 @@
 
     var currentMenu = null;
     var editingImageValue = "";
+    var MAX_IMAGE_DIMENSION = 1200;
+    var IMAGE_QUALITY = 0.82;
 
     function ensureAuthenticated() {
         var session = window.cardapioStore.getSession();
@@ -155,7 +157,13 @@
 
         currentMenu.restaurant_name = restaurantNameInput.value.trim();
         currentMenu.whatsapp = whatsappInput.value.trim();
-        saveMenu();
+        try {
+            saveMenu();
+        } catch (error) {
+            showFeedback(error.message || "Não foi possível salvar as configurações.", "error");
+            return;
+        }
+
         showFeedback("Configurações salvas no navegador com sucesso.", "success");
     }
 
@@ -171,12 +179,71 @@
             return;
         }
 
-        window.cardapioStore.saveAdminCredentials({
-            username: username,
-            password: password
-        });
+        try {
+            window.cardapioStore.saveAdminCredentials({
+                username: username,
+                password: password
+            });
+        } catch (error) {
+            showFeedback(error.message || "Não foi possível salvar o acesso do administrador.", "error");
+            return;
+        }
 
         showFeedback("Acesso do administrador atualizado com sucesso.", "success");
+    }
+
+    function loadImageElement(src) {
+        return new Promise(function (resolve, reject) {
+            var image = new Image();
+
+            image.onload = function () {
+                resolve(image);
+            };
+
+            image.onerror = function () {
+                reject(new Error("Não foi possível processar a imagem selecionada."));
+            };
+
+            image.src = src;
+        });
+    }
+
+    function getResizedDimensions(width, height) {
+        var largestSide = Math.max(width, height);
+
+        if (!largestSide || largestSide <= MAX_IMAGE_DIMENSION) {
+            return {
+                width: width,
+                height: height
+            };
+        }
+
+        var scale = MAX_IMAGE_DIMENSION / largestSide;
+        return {
+            width: Math.max(1, Math.round(width * scale)),
+            height: Math.max(1, Math.round(height * scale))
+        };
+    }
+
+    async function compressImageData(dataUrl, mimeType) {
+        var image = await loadImageElement(dataUrl);
+        var dimensions = getResizedDimensions(image.naturalWidth || image.width, image.naturalHeight || image.height);
+        var canvas = document.createElement("canvas");
+        var context = canvas.getContext("2d");
+
+        if (!context) {
+            return dataUrl;
+        }
+
+        canvas.width = dimensions.width;
+        canvas.height = dimensions.height;
+        context.drawImage(image, 0, 0, dimensions.width, dimensions.height);
+
+        if (mimeType === "image/png") {
+            return canvas.toDataURL("image/png");
+        }
+
+        return canvas.toDataURL("image/jpeg", IMAGE_QUALITY);
     }
 
     function readSelectedImage() {
@@ -195,8 +262,13 @@
 
             var reader = new FileReader();
 
-            reader.onload = function () {
-                resolve(reader.result || "");
+            reader.onload = async function () {
+                try {
+                    var compressedImage = await compressImageData(reader.result || "", selectedFile.type);
+                    resolve(compressedImage || "");
+                } catch (error) {
+                    reject(error);
+                }
             };
 
             reader.onerror = function () {
@@ -274,7 +346,13 @@
             return a.name.localeCompare(b.name, "pt-BR");
         });
 
-        saveMenu();
+        try {
+            saveMenu();
+        } catch (error) {
+            showFeedback(error.message || "Não foi possível salvar o item.", "error");
+            return;
+        }
+
         fillForms(currentMenu);
         resetItemForm();
         showFeedback("Item salvo com sucesso na administração.", "success");
@@ -320,7 +398,13 @@
             return entry.items.length > 0;
         });
 
-        saveMenu();
+        try {
+            saveMenu();
+        } catch (error) {
+            showFeedback(error.message || "Não foi possível remover o item.", "error");
+            return;
+        }
+
         fillForms(currentMenu);
         resetItemForm();
         showFeedback("Item removido com sucesso.", "success");
@@ -359,20 +443,14 @@
             return;
         }
 
-        var reader = new FileReader();
-
-        reader.onload = function () {
+        readSelectedImage().then(function (imageValue) {
             clearFeedback();
-            renderImagePreview(reader.result || "");
-        };
-
-        reader.onerror = function () {
+            renderImagePreview(imageValue || "");
+        }).catch(function () {
             imageInput.value = "";
             renderImagePreview(editingImageValue);
             showFeedback("Não foi possível carregar a prévia da imagem.", "error");
-        };
-
-        reader.readAsDataURL(selectedFile);
+        });
     });
 
     logoutLink.addEventListener("click", function () {
