@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login da Administração</title>
+    <title>Login da Administracao</title>
     <link rel="stylesheet" href="./assets/style.css">
 </head>
 <body class="login-page">
@@ -24,15 +24,15 @@
             <div class="login-card-content">
                 <p class="eyebrow">Acesso restrito</p>
                 <h1>Painel administrativo</h1>
-                <p class="login-intro">Entre com seu usuário e senha para gerenciar o cardápio.</p>
-                <p class="login-intro">Acesso inicial: usuário <strong>admin</strong> e senha <strong>123456</strong>.</p>
+                <p class="login-intro">Entre com o e-mail e a senha do administrador para gerenciar o cardapio.</p>
+                <p class="login-intro">No Supabase, crie o usuario administrativo em Authentication antes do primeiro acesso.</p>
 
                 <p id="login-feedback" class="status-message hidden"></p>
 
                 <form id="login-form" class="login-form">
                     <label class="form-field">
-                        <span>Usuário</span>
-                        <input id="username" name="username" type="text" required>
+                        <span>E-mail</span>
+                        <input id="username" name="username" type="email" required>
                     </label>
 
                     <label class="form-field">
@@ -45,6 +45,10 @@
             </div>
         </section>
     </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./assets/supabase-config.js"></script>
+    <script src="./assets/supabase-client.js"></script>
     <script src="./assets/config.js"></script>
     <script src="./assets/login.js"></script>
 </body>

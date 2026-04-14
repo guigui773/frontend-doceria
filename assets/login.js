@@ -18,31 +18,30 @@
         feedback.classList.remove("error", "success");
     }
 
-    function redirectIfLoggedIn() {
-        var session = window.cardapioStore.getSession();
-        if (session.authenticated) {
-            window.location.href = "./admin.html";
+    async function redirectIfLoggedIn() {
+        try {
+            var session = await window.cardapioStore.getSession();
+            if (session.authenticated) {
+                window.location.href = "./admin.html";
+            }
+        } catch (error) {
+            showFeedback(error.message || "Nao foi possivel verificar a sessao atual.", "error");
         }
     }
 
-    function submitLogin(event) {
+    async function submitLogin(event) {
         event.preventDefault();
         clearFeedback();
 
-        var credentials = window.cardapioStore.getAdminCredentials();
-
-        if (
-            usernameInput.value.trim() !== credentials.username ||
-            passwordInput.value.trim() !== credentials.password
-        ) {
-            showFeedback("Usuário ou senha inválidos.", "error");
+        try {
+            await window.cardapioStore.signInAdmin(
+                usernameInput.value.trim(),
+                passwordInput.value.trim()
+            );
+        } catch (error) {
+            showFeedback(error.message || "Nao foi possivel fazer login.", "error");
             return;
         }
-
-        window.cardapioStore.saveSession({
-            authenticated: true,
-            username: usernameInput.value.trim()
-        });
 
         showFeedback("Login realizado com sucesso.", "success");
         window.setTimeout(function () {

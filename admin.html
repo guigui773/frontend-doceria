@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Administração</title>
+    <title>Painel de Administracao</title>
     <link rel="stylesheet" href="./assets/style.css">
 </head>
 <body>
@@ -14,7 +14,7 @@
                 <h1>Painel de controle</h1>
             </div>
             <nav class="top-nav">
-                <a class="nav-link active" href="./admin.html">Cardápio</a>
+                <a class="nav-link active" href="./admin.html">Cardapio</a>
                 <a class="nav-link" href="./orders.html">Pedidos</a>
                 <a id="logout-link" class="nav-link" href="./login.html">Sair</a>
             </nav>
@@ -24,9 +24,9 @@
     <main class="container admin-layout">
         <section class="panel">
             <div class="panel-header">
-                <p class="section-kicker">Configurações</p>
+                <p class="section-kicker">Configuracoes</p>
                 <h2>Dados do restaurante</h2>
-                <p>Essas informações aparecem na vitrine pública e no botão do WhatsApp.</p>
+                <p>Essas informacoes aparecem na vitrine publica e no botao do WhatsApp.</p>
             </div>
 
             <form id="settings-form" class="form-grid">
@@ -39,7 +39,7 @@
                     <input id="whatsapp" name="whatsapp" type="text" required>
                 </label>
                 <div class="form-actions">
-                    <button class="button button-primary" type="submit">Salvar configurações</button>
+                    <button class="button button-primary" type="submit">Salvar configuracoes</button>
                 </div>
             </form>
         </section>
@@ -47,19 +47,19 @@
         <section class="panel">
             <div class="panel-header">
                 <p class="section-kicker">Acesso</p>
-                <h2>Login do administrador</h2>
-                <p>Altere o usuário e a senha usados para entrar no painel neste navegador.</p>
+                <h2>Conta administradora</h2>
+                <p>Atualize o e-mail e a senha do usuario autenticado no Supabase.</p>
             </div>
 
             <form id="admin-access-form" class="form-grid">
                 <label class="form-field">
-                    <span>Usuário administrador</span>
-                    <input id="admin_username" name="admin_username" type="text" required>
+                    <span>E-mail administrador</span>
+                    <input id="admin_username" name="admin_username" type="email" required>
                 </label>
 
                 <label class="form-field">
-                    <span>Senha administradora</span>
-                    <input id="admin_password" name="admin_password" type="password" required>
+                    <span>Nova senha</span>
+                    <input id="admin_password" name="admin_password" type="password" minlength="6" required>
                 </label>
 
                 <div class="form-actions">
@@ -72,7 +72,7 @@
             <div class="panel-header">
                 <p class="section-kicker">Itens</p>
                 <h2 id="item-form-title">Adicionar item</h2>
-                <p>Cadastre novos produtos ou edite os já existentes.</p>
+                <p>Cadastre novos produtos ou edite os ja existentes.</p>
             </div>
 
             <form id="item-form" class="form-grid">
@@ -89,35 +89,35 @@
                 </label>
 
                 <label class="form-field form-field-full">
-                    <span>Descrição</span>
+                    <span>Descricao</span>
                     <textarea id="description" name="description" rows="3"></textarea>
                 </label>
 
                 <label class="form-field">
-                    <span>Preço</span>
+                    <span>Preco</span>
                     <input id="price" name="price" type="number" min="0" step="0.01" required>
                 </label>
 
                 <label class="form-field">
                     <span>Carregar foto</span>
                     <input id="image" name="image" type="file" accept="image/*">
-                    <small id="image-help" class="field-help">Selecione uma imagem do seu dispositivo. Ao editar, envie outra foto apenas se quiser trocar a atual.</small>
+                    <small id="image-help" class="field-help">A imagem sera enviada ao Supabase Storage. Ao editar, envie outra foto apenas se quiser trocar a atual.</small>
                 </label>
 
                 <div id="image-preview" class="image-preview hidden"></div>
 
                 <div class="form-actions">
                     <button id="save-item-button" class="button button-primary" type="submit">Adicionar item</button>
-                    <button id="cancel-edit-button" class="button button-secondary hidden" type="button">Cancelar edição</button>
+                    <button id="cancel-edit-button" class="button button-secondary hidden" type="button">Cancelar edicao</button>
                 </div>
             </form>
         </section>
 
         <section class="panel panel-full">
             <div class="panel-header">
-                <p class="section-kicker">Catálogo</p>
+                <p class="section-kicker">Catalogo</p>
                 <h2>Itens cadastrados</h2>
-                <p>Use os botões para editar ou excluir qualquer item.</p>
+                <p>Use os botoes para editar ou excluir qualquer item.</p>
             </div>
 
             <p id="admin-feedback" class="status-message hidden"></p>
@@ -125,6 +125,9 @@
         </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./assets/supabase-config.js"></script>
+    <script src="./assets/supabase-client.js"></script>
     <script src="./assets/config.js"></script>
     <script src="./assets/admin-static.js"></script>
 </body>

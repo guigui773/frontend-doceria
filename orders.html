@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -14,7 +14,7 @@
                 <h1>Pedidos</h1>
             </div>
             <nav class="top-nav">
-                <a class="nav-link" href="./admin.html">Cardápio</a>
+                <a class="nav-link" href="./admin.html">Cardapio</a>
                 <a class="nav-link active" href="./orders.html">Pedidos</a>
                 <a id="logout-link" class="nav-link" href="./login.html">Sair</a>
             </nav>
@@ -50,7 +50,7 @@
 
             <div class="order-column">
                 <div class="panel-header">
-                    <p class="section-kicker">Saída</p>
+                    <p class="section-kicker">Saida</p>
                     <h2>Prontos</h2>
                 </div>
                 <div id="orders-pronto" class="orders-column-list"></div>
@@ -58,7 +58,7 @@
 
             <div class="order-column">
                 <div class="panel-header">
-                    <p class="section-kicker">Histórico</p>
+                    <p class="section-kicker">Historico</p>
                     <h2>Finalizados</h2>
                 </div>
                 <div id="orders-finalizados" class="orders-column-list"></div>
@@ -66,8 +66,10 @@
         </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./assets/supabase-config.js"></script>
+    <script src="./assets/supabase-client.js"></script>
     <script src="./assets/config.js"></script>
     <script src="./assets/orders-static.js"></script>
 </body>
 </html>
-

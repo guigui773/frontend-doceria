@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
     var restaurantName = document.getElementById("restaurant-name");
     var whatsappButton = document.getElementById("whatsapp-button");
     var menuStatus = document.getElementById("menu-status");
@@ -111,7 +111,7 @@
     function addToCart(itemId) {
         var item = getItemById(itemId);
         if (!item) {
-            showMessage(orderFeedback, "Esse item nÃ£o estÃ¡ mais disponÃ­vel.", "error");
+            showMessage(orderFeedback, "Esse item nao esta mais disponivel.", "error");
             return;
         }
 
@@ -173,7 +173,7 @@
             '<ul class="order-items-list">' + order.items.map(function (item) {
                 return "<li><strong>" + item.quantity + "x</strong> " + item.name + " <span>" + formatPrice(item.subtotal) + "</span></li>";
             }).join("") + "</ul>",
-            order.notes ? '<p class="order-note">ObservaÃ§Ãµes: ' + order.notes + "</p>" : "",
+            order.notes ? '<p class="order-note">Observacoes: ' + order.notes + "</p>" : "",
             '<div class="order-total">Total: <strong>' + formatPrice(order.total) + "</strong></div>",
             "</div>"
         ].join("");
@@ -203,9 +203,9 @@
     }
 
     function renderMenu(menu) {
-        restaurantName.textContent = menu.restaurant_name || "CardÃ¡pio Digital";
+        restaurantName.textContent = menu.restaurant_name || "Cardapio Digital";
         whatsappButton.href = buildWhatsappLink(menu.whatsapp);
-        whatsappButton.textContent = menu.whatsapp ? "Suporte pelo WhatsApp" : "WhatsApp nÃ£o informado";
+        whatsappButton.textContent = menu.whatsapp ? "Suporte pelo WhatsApp" : "WhatsApp nao informado";
 
         var categories = Array.isArray(menu.categories) ? menu.categories : [];
         if (!categories.length) {
@@ -249,56 +249,19 @@
         };
     }
 
-    function createOrder(payload) {
-        var orders = window.cardapioStore.getOrders();
-        var nextId = orders.reduce(function (maxId, order) {
-            return Math.max(maxId, Number(order.id) || 0);
-        }, 0) + 1;
-
-        var total = payload.items.reduce(function (sum, item) {
-            return sum + Number(item.subtotal);
-        }, 0);
-
-        var order = {
-            id: nextId,
-            customer_name: payload.customer_name,
-            table_number: payload.table_number,
-            notes: payload.notes,
-            status: "novo",
-            status_label: window.cardapioStore.getStatusLabel("novo"),
-            total: total,
-            created_at: new Date().toISOString(),
-            item_count: payload.items.reduce(function (sum, item) {
-                return sum + Number(item.quantity);
-            }, 0),
-            items: payload.items
-        };
-
-        orders.unshift(order);
-        window.cardapioStore.saveOrders(orders);
-        return order;
-    }
-
-    function findOrderById(orderId) {
-        return window.cardapioStore.getOrders().find(function (order) {
-            return String(order.id) === String(orderId);
-        }) || null;
-    }
-
     async function loadMenu() {
-       
         try {
             currentMenu = await window.cardapioStore.getMenu();
             renderMenu(currentMenu);
             renderCart();
-                clearMessage(menuStatus); 
+            clearMessage(menuStatus);
         } catch (error) {
-            showMessage(menuStatus, error.message || "Erro ao carregar o cardÃ¡pio.", "error");
+            showMessage(menuStatus, error.message || "Erro ao carregar o cardapio.", "error");
             menuContainer.innerHTML = "";
         }
     }
 
-    function submitOrder(event) {
+    async function submitOrder(event) {
         event.preventDefault();
         clearMessage(orderFeedback);
 
@@ -312,35 +275,43 @@
             return;
         }
 
-        var order = createOrder(createOrderPayload());
-        cart = [];
-        orderForm.reset();
-        renderCart();
-        orderLookupIdInput.value = order.id;
-        renderCustomerOrder(order);
-        showMessage(orderFeedback, "Pedido #" + order.id + " salvo no navegador com sucesso.", "success");
+        try {
+            var order = await window.cardapioStore.createOrder(createOrderPayload());
+            cart = [];
+            orderForm.reset();
+            renderCart();
+            orderLookupIdInput.value = order.id;
+            renderCustomerOrder(order);
+            showMessage(orderFeedback, "Pedido #" + order.id + " enviado com sucesso.", "success");
+        } catch (error) {
+            showMessage(orderFeedback, error.message || "Nao foi possivel registrar o pedido.", "error");
+        }
     }
 
-    function lookupOrder(event) {
+    async function lookupOrder(event) {
         event.preventDefault();
         clearMessage(orderFeedback);
 
         var orderId = orderLookupIdInput.value.trim();
         if (!orderId) {
-            showMessage(orderFeedback, "Informe o nÃºmero do pedido para visualizar.", "error");
+            showMessage(orderFeedback, "Informe o numero do pedido para visualizar.", "error");
             return;
         }
 
-        var order = findOrderById(orderId);
-        if (!order) {
-            customerOrderView.classList.add("hidden");
-            customerOrderView.innerHTML = "";
-            showMessage(orderFeedback, "Pedido nÃ£o encontrado neste navegador.", "error");
-            return;
-        }
+        try {
+            var order = await window.cardapioStore.findOrderById(orderId);
+            if (!order) {
+                customerOrderView.classList.add("hidden");
+                customerOrderView.innerHTML = "";
+                showMessage(orderFeedback, "Pedido nao encontrado.", "error");
+                return;
+            }
 
-        renderCustomerOrder(order);
-        showMessage(orderFeedback, "Pedido carregado com sucesso.", "success");
+            renderCustomerOrder(order);
+            showMessage(orderFeedback, "Pedido carregado com sucesso.", "success");
+        } catch (error) {
+            showMessage(orderFeedback, error.message || "Nao foi possivel consultar o pedido.", "error");
+        }
     }
 
     menuContainer.addEventListener("click", function (event) {
@@ -370,4 +341,3 @@
 
     loadMenu();
 })();
-
