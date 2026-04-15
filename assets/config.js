@@ -5,7 +5,7 @@
         ordersStorageKey: "doceria_frontend_orders",
         sessionStorageKey: "doceria_frontend_session",
         adminCredentialsStorageKey: "doceria_frontend_admin_credentials",
-        menuImagesBucket: (window.cardapioSupabaseConfig && window.cardapioSupabaseConfig.bucket) || "menu-images"
+        menuImagesBucket: (window.cardapioFirebaseConfig && window.cardapioFirebaseConfig.bucket) || "menu-images"
     };
 
     var STATUS_LABELS = {
@@ -50,25 +50,36 @@
         }
     }
 
-    function getSupabaseClient() {
-        return window.cardapioSupabase || null;
+    function getFirebaseApp() {
+        return window.cardapioFirebase || null;
+    }
+
+    function getFirebaseAuth() {
+        return window.cardapioFirebaseAuth || null;
+    }
+
+    function getFirestore() {
+        return window.cardapioFirestore || null;
+    }
+
+    function getFirebaseStorage() {
+        return window.cardapioStorage || null;
     }
 
     function isRemoteEnabled() {
-        return Boolean(getSupabaseClient());
+        return Boolean(getFirebaseApp());
     }
 
     function getSetupMessage() {
-        return "Supabase nao configurado. Preencha assets/supabase-config.js para ativar armazenamento permanente.";
+        return "Firebase nao configurado. Preencha assets/firebase-config.js com suas credenciais do Firebase.";
     }
 
-    function requireSupabase() {
-        var supabase = getSupabaseClient();
-        if (!supabase) {
+    function requireFirebase() {
+        var firebase = getFirebaseApp();
+        if (!firebase) {
             throw new Error(getSetupMessage());
         }
-
-        return supabase;
+        return firebase;
     }
 
     async function loadDefaultMenu() {
@@ -133,29 +144,20 @@
     }
 
     async function getRemoteMenu() {
-        var supabase = requireSupabase();
+        var firestore = getFirestore();
         var fallbackMenu = await loadDefaultMenu();
-        var results = await Promise.all([
-            supabase.from("restaurant_settings").select("*").eq("id", 1).maybeSingle(),
-            supabase.from("menu_items").select("*").order("sort_order", { ascending: true }).order("id", { ascending: true })
-        ]);
 
-        var settingsResult = results[0];
-        var itemsResult = results[1];
+        try {
+            var settingsDoc = await firestore.collection("settings").doc("restaurant").get();
+            var itemsQuery = await firestore.collection("menu_items").orderBy("sort_order").orderBy("id").get();
 
-        if (settingsResult.error) {
-            throw new Error(settingsResult.error.message || "Nao foi possivel carregar as configuracoes do restaurante.");
+            var settingsData = settingsDoc.exists ? settingsDoc.data() : null;
+            var itemsData = itemsQuery.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            return groupItemsAsMenu(settingsData, itemsData, fallbackMenu);
+        } catch (error) {
+            throw new Error(error.message || "Nao foi possivel carregar o cardapio.");
         }
-
-        if (itemsResult.error) {
-            throw new Error(itemsResult.error.message || "Nao foi possivel carregar os itens do cardapio.");
-        }
-
-        if (!settingsResult.data && !(itemsResult.data || []).length) {
-            return fallbackMenu;
-        }
-
-        return groupItemsAsMenu(settingsResult.data, itemsResult.data || [], fallbackMenu);
     }
 
     async function getMenu() {
@@ -174,54 +176,44 @@
     }
 
     async function saveRemoteMenu(menu) {
-        var supabase = requireSupabase();
+        var firestore = getFirestore();
         var flattenedItems = flattenItems(menu);
-        var timestamp = new Date().toISOString();
-        var settingsPayload = {
-            id: 1,
-            restaurant_name: menu.restaurant_name || "",
-            whatsapp: menu.whatsapp || "",
-            updated_at: timestamp
-        };
-        var existingResult = await supabase.from("menu_items").select("id");
 
-        if (existingResult.error) {
-            throw new Error(existingResult.error.message || "Nao foi possivel verificar os itens atuais do cardapio.");
-        }
-
-        var nextIds = flattenedItems.map(function (item) {
-            return Number(item.id);
-        });
-        var existingIds = (existingResult.data || []).map(function (item) {
-            return Number(item.id);
-        });
-        var idsToDelete = existingIds.filter(function (id) {
-            return nextIds.indexOf(id) === -1;
-        });
-
-        if (idsToDelete.length) {
-            var deleteResult = await supabase.from("menu_items").delete().in("id", idsToDelete);
-            if (deleteResult.error) {
-                throw new Error(deleteResult.error.message || "Nao foi possivel remover itens antigos do cardapio.");
-            }
-        }
-
-        if (flattenedItems.length) {
-            var upsertResult = await supabase.from("menu_items").upsert(flattenedItems, {
-                onConflict: "id"
+        try {
+            // Save settings
+            var settingsRef = firestore.collection("settings").doc("restaurant");
+            await settingsRef.set({
+                restaurant_name: menu.restaurant_name || "",
+                whatsapp: menu.whatsapp || "",
+                updated_at: new Date()
             });
 
-            if (upsertResult.error) {
-                throw new Error(upsertResult.error.message || "Nao foi possivel salvar os itens do cardapio.");
-            }
-        }
+            // Get existing items
+            var existingItems = await firestore.collection("menu_items").get();
+            var existingIds = existingItems.docs.map(doc => doc.id);
 
-        var settingsResult = await supabase.from("restaurant_settings").upsert(settingsPayload, {
-            onConflict: "id"
-        });
+            // Determine items to delete
+            var nextIds = flattenedItems.map(item => item.id.toString());
+            var idsToDelete = existingIds.filter(id => !nextIds.includes(id));
 
-        if (settingsResult.error) {
-            throw new Error(settingsResult.error.message || "Nao foi possivel salvar as configuracoes do restaurante.");
+            // Delete old items
+            var deletePromises = idsToDelete.map(id =>
+                firestore.collection("menu_items").doc(id).delete()
+            );
+            await Promise.all(deletePromises);
+
+            // Save new/updated items
+            var savePromises = flattenedItems.map(item => {
+                var docRef = firestore.collection("menu_items").doc(item.id.toString());
+                return docRef.set({
+                    ...item,
+                    updated_at: new Date()
+                });
+            });
+            await Promise.all(savePromises);
+
+        } catch (error) {
+            throw new Error(error.message || "Nao foi possivel salvar o cardapio.");
         }
     }
 
@@ -270,39 +262,33 @@
     }
 
     async function getRemoteOrders() {
-        var supabase = requireSupabase();
-        var ordersResult = await supabase.from("orders").select("*").order("created_at", { ascending: false });
+        var firestore = getFirestore();
 
-        if (ordersResult.error) {
-            throw new Error(ordersResult.error.message || "Nao foi possivel carregar os pedidos.");
-        }
+        try {
+            var ordersQuery = await firestore.collection("orders").orderBy("created_at", "desc").get();
+            var orders = ordersQuery.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        var orders = ordersResult.data || [];
-        if (!orders.length) {
-            return [];
-        }
-
-        var orderIds = orders.map(function (order) {
-            return order.id;
-        });
-        var itemsResult = await supabase.from("order_items").select("*").in("order_id", orderIds).order("id", { ascending: true });
-
-        if (itemsResult.error) {
-            throw new Error(itemsResult.error.message || "Nao foi possivel carregar os itens dos pedidos.");
-        }
-
-        var itemsByOrderId = {};
-        (itemsResult.data || []).forEach(function (item) {
-            if (!itemsByOrderId[item.order_id]) {
-                itemsByOrderId[item.order_id] = [];
+            if (!orders.length) {
+                return [];
             }
 
-            itemsByOrderId[item.order_id].push(item);
-        });
+            // Get order items for all orders
+            var orderIds = orders.map(order => order.id);
+            var itemsPromises = orderIds.map(orderId =>
+                firestore.collection("orders").doc(orderId).collection("items").get()
+            );
+            var itemsResults = await Promise.all(itemsPromises);
 
-        return orders.map(function (order) {
-            return normalizeOrder(order, itemsByOrderId[order.id] || []);
-        });
+            var itemsByOrderId = {};
+            itemsResults.forEach((querySnapshot, index) => {
+                var orderId = orderIds[index];
+                itemsByOrderId[orderId] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            });
+
+            return orders.map(order => normalizeOrder(order, itemsByOrderId[order.id] || []));
+        } catch (error) {
+            throw new Error(error.message || "Nao foi possivel carregar os pedidos.");
+        }
     }
 
     async function getOrders() {
@@ -342,43 +328,47 @@
             return localOrder;
         }
 
-        var supabase = requireSupabase();
+        var firestore = getFirestore();
         var total = payload.items.reduce(function (sum, item) {
             return sum + Number(item.subtotal);
         }, 0);
         var itemCount = payload.items.reduce(function (sum, item) {
             return sum + Number(item.quantity);
         }, 0);
-        var orderResult = await supabase.from("orders").insert({
-            customer_name: payload.customer_name,
-            table_number: payload.table_number,
-            notes: payload.notes,
-            status: "novo",
-            total: total,
-            item_count: itemCount
-        }).select("*").single();
 
-        if (orderResult.error) {
-            throw new Error(orderResult.error.message || "Nao foi possivel criar o pedido.");
-        }
-
-        var orderItemRows = payload.items.map(function (item) {
-            return {
-                order_id: orderResult.data.id,
-                item_id: item.id,
-                name: item.name,
-                quantity: Number(item.quantity),
-                unit_price: Number(item.unit_price),
-                subtotal: Number(item.subtotal)
+        try {
+            // Create order document
+            var orderRef = firestore.collection("orders").doc();
+            var orderData = {
+                customer_name: payload.customer_name,
+                table_number: payload.table_number,
+                notes: payload.notes,
+                status: "novo",
+                total: total,
+                item_count: itemCount,
+                created_at: new Date()
             };
-        });
-        var orderItemsResult = await supabase.from("order_items").insert(orderItemRows).select("*");
 
-        if (orderItemsResult.error) {
-            throw new Error(orderItemsResult.error.message || "Nao foi possivel salvar os itens do pedido.");
+            await orderRef.set(orderData);
+
+            // Create order items subcollection
+            var itemsPromises = payload.items.map(item =>
+                orderRef.collection("items").add({
+                    item_id: item.id,
+                    name: item.name,
+                    quantity: Number(item.quantity),
+                    unit_price: Number(item.unit_price),
+                    subtotal: Number(item.subtotal)
+                })
+            );
+
+            await Promise.all(itemsPromises);
+
+            // Get the created order with items
+            return await findOrderById(orderRef.id);
+        } catch (error) {
+            throw new Error(error.message || "Nao foi possivel criar o pedido.");
         }
-
-        return normalizeOrder(orderResult.data, orderItemsResult.data || []);
     }
 
     async function findOrderById(orderId) {
@@ -388,24 +378,22 @@
             }) || null;
         }
 
-        var supabase = requireSupabase();
-        var orderResult = await supabase.from("orders").select("*").eq("id", orderId).maybeSingle();
+        var firestore = getFirestore();
 
-        if (orderResult.error) {
-            throw new Error(orderResult.error.message || "Nao foi possivel consultar o pedido.");
+        try {
+            var orderDoc = await firestore.collection("orders").doc(orderId).get();
+            if (!orderDoc.exists) {
+                return null;
+            }
+
+            var orderData = { id: orderDoc.id, ...orderDoc.data() };
+            var itemsQuery = await orderDoc.ref.collection("items").get();
+            var itemsData = itemsQuery.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            return normalizeOrder(orderData, itemsData);
+        } catch (error) {
+            throw new Error(error.message || "Nao foi possivel carregar o pedido.");
         }
-
-        if (!orderResult.data) {
-            return null;
-        }
-
-        var itemsResult = await supabase.from("order_items").select("*").eq("order_id", orderId).order("id", { ascending: true });
-
-        if (itemsResult.error) {
-            throw new Error(itemsResult.error.message || "Nao foi possivel carregar os itens do pedido.");
-        }
-
-        return normalizeOrder(orderResult.data, itemsResult.data || []);
     }
 
     async function updateOrderStatus(orderId, status) {
@@ -427,20 +415,17 @@
             }) || null;
         }
 
-        var supabase = requireSupabase();
-        var updateResult = await supabase.from("orders").update({
-            status: status
-        }).eq("id", orderId).select("*").maybeSingle();
+        var firestore = getFirestore();
 
-        if (updateResult.error) {
-            throw new Error(updateResult.error.message || "Nao foi possivel atualizar o status do pedido.");
+        try {
+            await firestore.collection("orders").doc(orderId).update({
+                status: status
+            });
+
+            return await findOrderById(orderId);
+        } catch (error) {
+            throw new Error(error.message || "Nao foi possivel atualizar o status do pedido.");
         }
-
-        if (!updateResult.data) {
-            return null;
-        }
-
-        return findOrderById(orderId);
     }
 
     async function getSession() {
@@ -448,17 +433,13 @@
             return readStorage(CONFIG.sessionStorageKey, { authenticated: false });
         }
 
-        var supabase = requireSupabase();
-        var sessionResult = await supabase.auth.getSession();
-
-        if (sessionResult.error) {
-            throw new Error(sessionResult.error.message || "Nao foi possivel recuperar a sessao atual.");
-        }
+        var auth = getFirebaseAuth();
+        var user = auth.currentUser;
 
         return {
-            authenticated: Boolean(sessionResult.data.session),
-            email: sessionResult.data.session && sessionResult.data.session.user ? sessionResult.data.session.user.email || "" : "",
-            session: sessionResult.data.session || null
+            authenticated: Boolean(user),
+            email: user ? user.email || user.displayName || "" : "",
+            user: user || null
         };
     }
 
@@ -486,14 +467,47 @@
             return;
         }
 
-        var supabase = requireSupabase();
-        var signInResult = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
+        var auth = getFirebaseAuth();
+        try {
+            await auth.signInWithEmailAndPassword(email, password);
+        } catch (error) {
+            throw new Error(error.message || "Nao foi possivel fazer login.");
+        }
+    }
 
-        if (signInResult.error) {
-            throw new Error(signInResult.error.message || "Nao foi possivel fazer login.");
+    async function signInWithGitHub() {
+        if (!isRemoteEnabled()) {
+            throw new Error("Login com GitHub requer configuracao remota.");
+        }
+
+        var auth = getFirebaseAuth();
+        
+        try {
+            var provider = new window.firebase.auth.GithubAuthProvider();
+            provider.addScope('user:email');
+            provider.setCustomParameters({
+                'allow_signup': 'true'
+            });
+
+            var result = await auth.signInWithPopup(provider);
+            
+            // Redirect to admin after successful login
+            if (result.user) {
+                window.location.href = "./admin.html";
+            }
+        } catch (error) {
+            // Handle specific Firebase errors
+            if (error.code === 'auth/popup-blocked') {
+                throw new Error("Pop-up foi bloqueado. Verifique suas configuracoes de navegador.");
+            } else if (error.code === 'auth/popup-closed-by-user') {
+                throw new Error("Login cancelado pelo usuario.");
+            } else if (error.code === 'auth/operation-not-supported-in-this-environment') {
+                throw new Error("Pop-ups nao sao suportados neste navegador.");
+            } else if (error.code === 'auth/unauthorized-domain') {
+                throw new Error("Dominio nao autorizado no Firebase. Configure em Authentication > Settings > Authorized domains.");
+            } else {
+                throw new Error(error.message || "Nao foi possivel fazer login com GitHub.");
+            }
         }
     }
 
@@ -503,11 +517,11 @@
             return;
         }
 
-        var supabase = requireSupabase();
-        var signOutResult = await supabase.auth.signOut({ scope: "local" });
-
-        if (signOutResult.error) {
-            throw new Error(signOutResult.error.message || "Nao foi possivel sair da conta.");
+        var auth = getFirebaseAuth();
+        try {
+            await auth.signOut();
+        } catch (error) {
+            throw new Error(error.message || "Nao foi possivel sair da conta.");
         }
     }
 
@@ -523,22 +537,8 @@
             return;
         }
 
-        var supabase = requireSupabase();
-        var updates = {};
-
-        if (credentials.email) {
-            updates.email = credentials.email;
-        }
-
-        if (credentials.password) {
-            updates.password = credentials.password;
-        }
-
-        var updateResult = await supabase.auth.updateUser(updates);
-
-        if (updateResult.error) {
-            throw new Error(updateResult.error.message || "Nao foi possivel atualizar os dados do administrador.");
-        }
+        // Firebase-based admin credential update is not implemented in this frontend.
+        throw new Error("Atualizacao de credenciais administrativas via Firebase nao esta disponivel no frontend.");
     }
 
     async function uploadMenuImage(file) {
@@ -558,7 +558,7 @@
             });
         }
 
-        var supabase = requireSupabase();
+        var storage = getFirebaseStorage();
         var extension = "";
         var nameParts = String(file.name || "imagem").split(".");
 
@@ -567,21 +567,16 @@
         }
 
         var filePath = "menu/" + Date.now() + "-" + Math.random().toString(36).slice(2) + extension;
-        var uploadResult = await supabase.storage.from(CONFIG.menuImagesBucket).upload(filePath, file, {
-            cacheControl: "3600",
-            upsert: false
-        });
 
-        if (uploadResult.error) {
-            throw new Error(uploadResult.error.message || "Nao foi possivel enviar a imagem para o armazenamento.");
+        try {
+            var storageRef = storage.ref();
+            var imageRef = storageRef.child(filePath);
+            var uploadTask = await imageRef.put(file);
+            var downloadURL = await uploadTask.ref.getDownloadURL();
+            return downloadURL;
+        } catch (error) {
+            throw new Error(error.message || "Nao foi possivel enviar a imagem para o armazenamento.");
         }
-
-        var publicUrlResult = supabase.storage.from(CONFIG.menuImagesBucket).getPublicUrl(filePath);
-        if (!publicUrlResult.data || !publicUrlResult.data.publicUrl) {
-            throw new Error("Nao foi possivel gerar o link publico da imagem.");
-        }
-
-        return publicUrlResult.data.publicUrl;
     }
 
     function getStatusLabel(status) {
@@ -600,6 +595,7 @@
         getSession: getSession,
         saveSession: saveSession,
         signInAdmin: signInAdmin,
+        signInWithGitHub: signInWithGitHub,
         signOut: signOut,
         updateAdminCredentials: updateAdminCredentials,
         uploadMenuImage: uploadMenuImage,

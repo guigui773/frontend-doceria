@@ -586,6 +586,48 @@ textarea:focus {
     margin-top: 4px;
 }
 
+.login-divider {
+    display: flex;
+    align-items: center;
+    margin: 16px 0;
+    text-align: center;
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background-color: #e1e5e9;
+}
+
+.login-divider span {
+    padding: 0 16px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.github-login-button {
+    width: 100%;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: #24292e;
+    color: white;
+    border: 1px solid #24292e;
+}
+
+.github-login-button:hover {
+    background-color: #1a1e22;
+    border-color: #1a1e22;
+}
+
+.github-login-button svg {
+    flex-shrink: 0;
+}
+
 .public-page .site-header .header-content {
     justify-content: flex-start;
 }
