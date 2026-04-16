@@ -48,7 +48,7 @@
             <div class="panel-header">
                 <p class="section-kicker">Acesso</p>
                 <h2>Conta administradora</h2>
-                <p>Atualize o e-mail do usuario autenticado no Firebase. A senha e opcional e so muda se for preenchida.</p>
+                <p>Atualize o e-mail do usuario administrador. A senha e opcional e so muda se for preenchida.</p>
             </div>
 
             <form id="admin-access-form" class="form-grid">
@@ -101,7 +101,7 @@
                 <label class="form-field">
                     <span>Carregar foto</span>
                     <input id="image" name="image" type="file" accept="image/*">
-                    <small id="image-help" class="field-help">A imagem sera enviada ao Firebase Storage. Ao editar, envie outra foto apenas se quiser trocar a atual.</small>
+                    <small id="image-help" class="field-help">A imagem sera salva localmente como base64, e sera exibida no cardapio.</small>
                 </label>
 
                 <div id="image-preview" class="image-preview hidden"></div>
@@ -125,12 +125,6 @@
         </section>
     </main>
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-    <script src="./assets/firebase-config.js"></script>
-    <script src="./assets/firebase-client.js"></script>
     <script src="./assets/config.js"></script>
     <script src="./assets/admin-static.js"></script>
 </body>

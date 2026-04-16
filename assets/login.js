@@ -3,7 +3,6 @@
     var feedback = document.getElementById("login-feedback");
     var usernameInput = document.getElementById("username");
     var passwordInput = document.getElementById("password");
-    var githubLoginButton = document.getElementById("github-login-button");
 
     function showFeedback(message, type) {
         feedback.textContent = message;
@@ -50,34 +49,6 @@
         }, 300);
     }
 
-    async function submitGitHubLogin(event) {
-        event.preventDefault();
-        clearFeedback();
-        githubLoginButton.disabled = true;
-
-        try {
-            await window.cardapioStore.signInWithGitHub();
-            showFeedback("Redirecionando para autenticacao GitHub...", "success");
-        } catch (error) {
-            showFeedback(error.message || "Nao foi possivel fazer login com GitHub.", "error");
-            githubLoginButton.disabled = false;
-        }
-    }
-
-    function bindFirebaseAuthRedirect() {
-        if (!window.cardapioFirebaseAuth || typeof window.cardapioFirebaseAuth.onAuthStateChanged !== "function") {
-            return;
-        }
-
-        window.cardapioFirebaseAuth.onAuthStateChanged(function (user) {
-            if (user) {
-                window.location.href = "./admin.html";
-            }
-        });
-    }
-
     loginForm.addEventListener("submit", submitLogin);
-    githubLoginButton.addEventListener("click", submitGitHubLogin);
-    bindFirebaseAuthRedirect();
     redirectIfLoggedIn();
 })();
