@@ -4,33 +4,143 @@
   "whatsapp": "5581983112886",
   "categories": [
     {
-      "name": "Bebidas",
+      "name": "Bolos e Tortas",
       "items": [
         {
+          "id": 1,
+          "name": "Bolo de Chocolate com Calda Quente e Morangos",
+          "description": "Chocolate premium com calda quente e morangos frescos",
+          "price": 45.0,
+          "image": "./assets/img/bolo-chocolate-morango.jpg"
+        },
+        {
+          "id": 2,
+          "name": "Bolo de Pistache com Cobertura e Granulado",
+          "description": "Massa de pistache delicada com cobertura cremosa",
+          "price": 48.0,
+          "image": "./assets/img/bolo-pistache.jpg"
+        },
+        {
           "id": 3,
-          "name": "Refrigerante Lata",
-          "description": "350ml",
-          "price": 6.0,
-          "image": "./assets/img/refrigerante-lata.jpg"
+          "name": "Naked Cake de Frutas Tropicais",
+          "description": "Morango, Maracujá e Kiwi",
+          "price": 52.0,
+          "image": "./assets/img/naked-cake-tropical.jpg"
         },
         {
           "id": 4,
-          "name": "Suco Natural",
-          "description": "Copo 300ml",
-          "price": 8.5,
-          "image": "./assets/img/suco-natural.jpg"
+          "name": "Tartelette de Morango",
+          "description": "Massa folhada crocante com morangos frescos",
+          "price": 38.0,
+          "image": "./assets/img/tartelette-morango.jpg"
+        },
+        {
+          "id": 5,
+          "name": "Bolo no Pote",
+          "description": "Bolo cremoso em pote individual",
+          "price": 18.0,
+          "image": "./assets/img/bolo-pote.jpg"
         }
       ]
     },
     {
-      "name": "Doce",
+      "name": "Cupcakes",
       "items": [
         {
-          "id": 5,
-          "name": "Cupcake",
-          "description": "Massa branca com recheio de doce de leite",
+          "id": 6,
+          "name": "Red Velvet Cupcake",
+          "description": "Cobertura de cream cheese com detalhe de coração",
           "price": 14.99,
-          "image": "./assets/img/cupcake.jpg"
+          "image": "./assets/img/cupcake-red-velvet.jpg"
+        },
+        {
+          "id": 7,
+          "name": "Morango & Maracujá Cupcake",
+          "description": "Combinação refrescante de frutas",
+          "price": 14.99,
+          "image": "./assets/img/cupcake-morango-maracuja.jpg"
+        },
+        {
+          "id": 8,
+          "name": "Pistache & Limão Cupcake",
+          "description": "Sabor sofisticado e equilibrado",
+          "price": 14.99,
+          "image": "./assets/img/cupcake-pistache-limao.jpg"
+        },
+        {
+          "id": 9,
+          "name": "Chocolate & Avelã Cupcake",
+          "description": "Clássico irresistível",
+          "price": 14.99,
+          "image": "./assets/img/cupcake-chocolate-avela.jpg"
+        }
+      ]
+    },
+    {
+      "name": "Doces Individuais e Sobremesas",
+      "items": [
+        {
+          "id": 10,
+          "name": "Pudim de Leite Condensado",
+          "description": "Clássico doce e cremoso",
+          "price": 12.0,
+          "image": "./assets/img/pudim-leite-condensado.jpg"
+        },
+        {
+          "id": 11,
+          "name": "Delícia de Abacaxi",
+          "description": "Sobremesa refrescante no copo",
+          "price": 13.0,
+          "image": "./assets/img/delicia-abacaxi.jpg"
+        },
+        {
+          "id": 12,
+          "name": "Surpresa de Uva",
+          "description": "Roxo e Verde - bombons de uva cobertos",
+          "price": 15.0,
+          "image": "./assets/img/surpresa-uva.jpg"
+        },
+        {
+          "id": 13,
+          "name": "Bem-Casados",
+          "description": "Tradicional e irresistível",
+          "price": 8.0,
+          "image": "./assets/img/bem-casados.jpg"
+        },
+        {
+          "id": 14,
+          "name": "Bombom de Limão",
+          "description": "Sabor cítrico intenso",
+          "price": 6.0,
+          "image": "./assets/img/bombom-limao.jpg"
+        },
+        {
+          "id": 15,
+          "name": "Bombom de Chocolate Branco",
+          "description": "Delicado e cremoso",
+          "price": 6.0,
+          "image": "./assets/img/bombom-chocolate-branco.jpg"
+        },
+        {
+          "id": 16,
+          "name": "Macarron de Pistache",
+          "description": "Doce francês sofisticado",
+          "price": 7.0,
+          "image": "./assets/img/macarron-pistache.jpg"
+        },
+        {
+          "id": 17,
+          "name": "Morango Coberto com Chocolate Branco",
+          "description": "Fruta fresca coberta com chocolate premium",
+          "price": 8.0,
+          "image": "./assets/img/morango-chocolate-branco.jpg"
+        },
+        {
+          "id": 18,
+          "name": "Verrine de Maracujá",
+          "description": "Sobremesa elegante em taça",
+          "price": 14.0,
+          "image": "./assets/img/verrine-maracuja.jpg"
         }
       ]
     }
