@@ -74,6 +74,35 @@
         return "Firebase nao configurado. Preencha assets/firebase-config.js com suas credenciais do Firebase.";
     }
 
+    function normalizeDateValue(value) {
+        if (!value) {
+            return "";
+        }
+
+        if (typeof value === "string") {
+            return value;
+        }
+
+        if (value instanceof Date) {
+            return value.toISOString();
+        }
+
+        if (typeof value.toDate === "function") {
+            return value.toDate().toISOString();
+        }
+
+        if (typeof value.seconds === "number") {
+            return new Date(value.seconds * 1000).toISOString();
+        }
+
+        var dateValue = new Date(value);
+        if (!Number.isNaN(dateValue.getTime())) {
+            return dateValue.toISOString();
+        }
+
+        return "";
+    }
+
     function requireFirebase() {
         var firebase = getFirebaseApp();
         if (!firebase) {
@@ -247,7 +276,7 @@
             status: orderRow.status,
             status_label: STATUS_LABELS[orderRow.status] || orderRow.status,
             total: Number(orderRow.total || 0),
-            created_at: orderRow.created_at,
+            created_at: normalizeDateValue(orderRow.created_at),
             item_count: Number(orderRow.item_count || 0),
             items: (orderItems || []).map(function (item) {
                 return {
@@ -335,10 +364,9 @@
         var itemCount = payload.items.reduce(function (sum, item) {
             return sum + Number(item.quantity);
         }, 0);
+        var auth = getFirebaseAuth();
 
         try {
-            // Create order document
-            var orderRef = firestore.collection("orders").doc();
             var orderData = {
                 customer_name: payload.customer_name,
                 table_number: payload.table_number,
@@ -346,10 +374,36 @@
                 status: "novo",
                 total: total,
                 item_count: itemCount,
-                created_at: new Date()
+                created_at: new Date(),
+                owner_uid: auth && auth.currentUser ? auth.currentUser.uid : null
             };
 
-            await orderRef.set(orderData);
+            // Keep numeric, user-facing order IDs.
+            var counterRef = firestore.collection("counters").doc("orders");
+            var createdOrderId = await firestore.runTransaction(async function (transaction) {
+                var counterDoc = await transaction.get(counterRef);
+                var nextId = 1;
+
+                if (counterDoc.exists) {
+                    nextId = Number(counterDoc.data().next_id || 1);
+                    if (!Number.isFinite(nextId) || nextId < 1) {
+                        nextId = 1;
+                    }
+                }
+
+                var orderId = String(nextId);
+                var orderRef = firestore.collection("orders").doc(orderId);
+
+                transaction.set(counterRef, {
+                    next_id: nextId + 1,
+                    updated_at: new Date()
+                }, { merge: true });
+
+                transaction.set(orderRef, orderData);
+                return orderId;
+            });
+
+            var orderRef = firestore.collection("orders").doc(createdOrderId);
 
             // Create order items subcollection
             var itemsPromises = payload.items.map(item =>
@@ -496,15 +550,29 @@
                 window.location.href = "./admin.html";
             }
         } catch (error) {
+            if (
+                error.code === 'auth/popup-blocked' ||
+                error.code === 'auth/popup-closed-by-user' ||
+                error.code === 'auth/operation-not-supported-in-this-environment'
+            ) {
+                try {
+                    var redirectProvider = new window.firebase.auth.GithubAuthProvider();
+                    redirectProvider.addScope('user:email');
+                    redirectProvider.setCustomParameters({
+                        'allow_signup': 'true'
+                    });
+                    await auth.signInWithRedirect(redirectProvider);
+                    return;
+                } catch (redirectError) {
+                    throw new Error(redirectError.message || "Nao foi possivel iniciar o login com GitHub.");
+                }
+            }
+
             // Handle specific Firebase errors
-            if (error.code === 'auth/popup-blocked') {
-                throw new Error("Pop-up foi bloqueado. Verifique suas configuracoes de navegador.");
-            } else if (error.code === 'auth/popup-closed-by-user') {
-                throw new Error("Login cancelado pelo usuario.");
-            } else if (error.code === 'auth/operation-not-supported-in-this-environment') {
-                throw new Error("Pop-ups nao sao suportados neste navegador.");
-            } else if (error.code === 'auth/unauthorized-domain') {
+            if (error.code === 'auth/unauthorized-domain') {
                 throw new Error("Dominio nao autorizado no Firebase. Configure em Authentication > Settings > Authorized domains.");
+            } else if (error.code === 'auth/account-exists-with-different-credential') {
+                throw new Error("Ja existe uma conta com este e-mail usando outro provedor. Entre com o metodo original e vincule o GitHub.");
             } else {
                 throw new Error(error.message || "Nao foi possivel fazer login com GitHub.");
             }
@@ -537,8 +605,47 @@
             return;
         }
 
-        // Firebase-based admin credential update is not implemented in this frontend.
-        throw new Error("Atualizacao de credenciais administrativas via Firebase nao esta disponivel no frontend.");
+        var auth = getFirebaseAuth();
+        var user = auth && auth.currentUser ? auth.currentUser : null;
+
+        if (!user) {
+            throw new Error("Nenhum usuario autenticado para atualizar as credenciais.");
+        }
+
+        var nextEmail = String(credentials.email || "").trim();
+        var nextPassword = String(credentials.password || "").trim();
+
+        if (!nextEmail) {
+            throw new Error("Informe um e-mail valido.");
+        }
+
+        try {
+            if (nextEmail !== String(user.email || "").trim()) {
+                await user.updateEmail(nextEmail);
+            }
+
+            if (nextPassword) {
+                if (nextPassword.length < 6) {
+                    throw new Error("A senha deve ter no minimo 6 caracteres.");
+                }
+
+                await user.updatePassword(nextPassword);
+            }
+
+            await user.reload();
+            var refreshedUser = auth.currentUser;
+            saveSession({
+                authenticated: true,
+                email: refreshedUser ? refreshedUser.email || refreshedUser.displayName || "" : nextEmail,
+                user: refreshedUser || null
+            });
+        } catch (error) {
+            if (error.code === "auth/requires-recent-login") {
+                throw new Error("Por seguranca, faca login novamente e tente atualizar os dados.");
+            }
+
+            throw new Error(error.message || "Nao foi possivel atualizar as credenciais do administrador.");
+        }
     }
 
     async function uploadMenuImage(file) {

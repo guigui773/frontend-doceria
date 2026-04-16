@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificação da Integração Firebase + GitHub OAuth</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .check-item {
+            display: flex;
+            align-items: start;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            border-left: 4px solid #ccc;
+        }
+        
+        .check-item.success {
+            background: #e8f5e9;
+            border-left-color: #4caf50;
+        }
+        
+        .check-item.error {
+            background: #ffebee;
+            border-left-color: #f44336;
+        }
+        
+        .check-item.warning {
+            background: #fff3e0;
+            border-left-color: #ff9800;
+        }
+        
+        .status-icon {
+            font-size: 20px;
+            margin-right: 15px;
+            min-width: 24px;
+            text-align: center;
+        }
+        
+        .check-content {
+            flex: 1;
+        }
+        
+        .check-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .check-message {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .details {
+            background: #f9f9f9;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            color: #333;
+            word-break: break-all;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+        
+        .divider {
+            height: 1px;
+            background: #e0e0e0;
+            margin: 30px 0;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Verificação de Integração</h1>
+        <p class="subtitle">Firebase + GitHub OAuth</p>
+        
+        <div id="checks-container"></div>
+        
+        <div class="button-group">
+            <button class="btn-primary" onclick="runAllChecks()">🔄 Executar Verificação Completa</button>
+            <button class="btn-secondary" onclick="goToLogin()">👤 Ir para Login</button>
+            <button class="btn-secondary" onclick="viewConfig()">⚙️ Ver Configuração</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="./assets/firebase-config.js"></script>
+
+    <script>
+        const checksContainer = document.getElementById('checks-container');
+
+        function addCheck(id, label, status, message, details = '') {
+            const check = document.createElement('div');
+            check.className = `check-item ${status}`;
+            check.id = id;
+            
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                pending: '⏳'
+            };
+            
+            check.innerHTML = `
+                <div class="status-icon">${icons[status]}</div>
+                <div class="check-content">
+                    <div class="check-label">${label}</div>
+                    <div class="check-message">${message}</div>
+                    ${details ? `<div class="details">${details}</div>` : ''}
+                </div>
+            `;
+            
+            checksContainer.appendChild(check);
+            return check;
+        }
+
+        function updateCheck(id, status, message, details = '') {
+            const check = document.getElementById(id);
+            if (!check) return;
+            
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                pending: '⏳'
+            };
+            
+            check.className = `check-item ${status}`;
+            check.innerHTML = `
+                <div class="status-icon">${icons[status]}</div>
+                <div class="check-content">
+                    <div class="check-label">${check.querySelector('.check-label').textContent}</div>
+                    <div class="check-message">${message}</div>
+                    ${details ? `<div class="details">${details}</div>` : ''}
+                </div>
+            `;
+        }
+
+        async function runAllChecks() {
+            checksContainer.innerHTML = '';
+            
+            // Check 1: Firebase Config
+            addCheck('config', 'Configuração do Firebase', 'pending', 'Verificando...');
+            const config = window.firebaseConfig;
+            
+            if (!config || !config.apiKey) {
+                updateCheck('config', 'error', 
+                    'Arquivo assets/firebase-config.js não está configurado corretamente.',
+                    'Abra assets/firebase-config.js e preencha com suas credenciais do Firebase.'
+                );
+            } else {
+                updateCheck('config', 'success', 
+                    'Arquivo de configuração encontrado.',
+                    `Project ID: <strong>${config.projectId}</strong><br>Auth Domain: <strong>${config.authDomain}</strong>`
+                );
+            }
+            
+            // Check 2: Firebase SDK
+            addCheck('sdk', 'Firebase SDK', 'pending', 'Verificando...');
+            if (window.firebase) {
+                updateCheck('sdk', 'success', 
+                    'Firebase SDK carregado corretamente.'
+                );
+            } else {
+                updateCheck('sdk', 'error', 
+                    'Firebase SDK não foi carregado. Verifique os <script> tags no HTML.'
+                );
+                return;
+            }
+            
+            // Check 3: Firebase Initialization
+            addCheck('init', 'Inicialização do Firebase', 'pending', 'Verificando...');
+            try {
+                const app = window.firebase.apps[0];
+                if (app) {
+                    updateCheck('init', 'success', 
+                        'Firebase inicializado com sucesso.',
+                        `App: <strong>${app.name}</strong>`
+                    );
+                } else {
+                    updateCheck('init', 'error', 
+                        'Firebase não foi inicializado. Verifique assets/firebase-config.js.'
+                    );
+                    return;
+                }
+            } catch (error) {
+                updateCheck('init', 'error', 
+                    'Erro ao inicializar Firebase: ' + error.message
+                );
+                return;
+            }
+            
+            // Check 4: Authentication
+            addCheck('auth', 'Autenticação', 'pending', 'Verificando...');
+            try {
+                const auth = window.firebase.auth();
+                updateCheck('auth', 'success', 
+                    'Autenticação carregada corretamente.'
+                );
+                
+                // Check 5: Current User
+                addCheck('user', 'Usuário Atual', 'pending', 'Verificando...');
+                const currentUser = auth.currentUser;
+                if (currentUser) {
+                    updateCheck('user', 'success', 
+                        'Usuário autenticado!',
+                        `Email: <strong>${currentUser.email || currentUser.displayName || 'N/A'}</strong><br>Provider: <strong>${currentUser.providerData[0]?.providerId || 'N/A'}</strong>`
+                    );
+                } else {
+                    updateCheck('user', 'warning', 
+                        'Nenhum usuário autenticado no momento.',
+                        'Clique no botão "Ir para Login" para fazer login com GitHub.'
+                    );
+                }
+            } catch (error) {
+                updateCheck('auth', 'error', 
+                    'Erro ao carregar autenticação: ' + error.message
+                );
+            }
+            
+            // Check 6: Firestore
+            addCheck('firestore', 'Firestore Database', 'pending', 'Verificando...');
+            try {
+                const firestore = window.firebase.firestore();
+                // Try to read a collection
+                const testQuery = await firestore.collection('_test').limit(1).get();
+                updateCheck('firestore', 'success', 
+                    'Firestore conectado corretamente.',
+                    'Você pode ler e escrever dados.'
+                );
+            } catch (error) {
+                if (error.code === 'permission-denied') {
+                    updateCheck('firestore', 'warning', 
+                        'Firestore encontrado, mas acesso negado.',
+                        'Configure as regras de segurança do Firestore.'
+                    );
+                } else {
+                    updateCheck('firestore', 'error', 
+                        'Erro ao conectar Firestore: ' + error.message
+                    );
+                }
+            }
+            
+            // Check 7: Storage
+            addCheck('storage', 'Cloud Storage', 'pending', 'Verificando...');
+            try {
+                const storage = window.firebase.storage();
+                updateCheck('storage', 'success', 
+                    'Cloud Storage carregado corretamente.',
+                    'Você pode fazer upload de imagens.'
+                );
+            } catch (error) {
+                updateCheck('storage', 'error', 
+                    'Erro ao carregar Storage: ' + error.message
+                );
+            }
+        }
+
+        function goToLogin() {
+            window.location.href = './login.html';
+        }
+
+        function viewConfig() {
+            const config = window.firebaseConfig;
+            if (!config) {
+                alert('Configuração não encontrada em assets/firebase-config.js');
+                return;
+            }
+            
+            const message = `
+Firebase Configuration:
+${JSON.stringify(config, null, 2)}
+
+⚠️  Não compartilhe essas credenciais publicamente!
+            `;
+            alert(message);
+        }
+
+        // Run checks on page load
+        window.addEventListener('load', () => {
+            setTimeout(runAllChecks, 500);
+        });
+    </script>
+</body>
+</html>

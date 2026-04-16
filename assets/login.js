@@ -57,14 +57,27 @@
 
         try {
             await window.cardapioStore.signInWithGitHub();
-            // signInWithGitHub redireciona automaticamente após login bem-sucedido
+            showFeedback("Redirecionando para autenticacao GitHub...", "success");
         } catch (error) {
             showFeedback(error.message || "Nao foi possivel fazer login com GitHub.", "error");
             githubLoginButton.disabled = false;
         }
     }
 
+    function bindFirebaseAuthRedirect() {
+        if (!window.cardapioFirebaseAuth || typeof window.cardapioFirebaseAuth.onAuthStateChanged !== "function") {
+            return;
+        }
+
+        window.cardapioFirebaseAuth.onAuthStateChanged(function (user) {
+            if (user) {
+                window.location.href = "./admin.html";
+            }
+        });
+    }
+
     loginForm.addEventListener("submit", submitLogin);
     githubLoginButton.addEventListener("click", submitGitHubLogin);
+    bindFirebaseAuthRedirect();
     redirectIfLoggedIn();
 })();

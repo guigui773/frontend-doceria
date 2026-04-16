@@ -30,7 +30,8 @@ O frontend agora usa Firebase em vez do Supabase para persistência.
 3. Preencha:
    - **Application name**: "La Mafia dei Dolci Admin"
    - **Homepage URL**: `http://localhost:8000` (para desenvolvimento)
-   - **Authorization callback URL**: copie do Firebase (formato: `https://SEU_PROJETO.firebaseapp.com/__/auth/handler`)
+   - **Authorization callback URL**: copie do Firebase (formato: `https://doceria-d0f9f.firebaseapp.com/__/auth/handler`)
+   - Para produção no GitHub Pages, mantenha este mesmo callback URL e autorize seu domínio GitHub Pages no Firebase
 4. Clique "Register application"
 5. Copie o **Client ID** e **Client Secret**
 
@@ -74,7 +75,32 @@ Edite `assets/firebase-config.js`:
 })();
 ```
 
-## 8. Configurar regras de segurança
+## 8. Configurar Firebase Admin SDK (opcional, para operações server-side)
+
+Se precisar de operações administrativas no servidor (como popular dados iniciais ou tarefas de manutenção), use o Firebase Admin SDK.
+
+1. Baixe a chave da conta de serviço:
+   - No Firebase Console, clique no ícone de engrenagem > "Configurações do projeto"
+   - Vá para "Contas de serviço"
+   - Clique "Gerar nova chave privada"
+   - Baixe o arquivo JSON
+
+2. O arquivo `assets/firebase-admin.js` já está configurado com as credenciais da conta de serviço fornecida.
+
+3. Para usar em um script Node.js:
+   ```js
+   const admin = require('./assets/firebase-admin.js');
+   const db = admin.firestore();
+
+   // Exemplo: adicionar item ao menu
+   await db.collection('menu_items').add({
+     name: 'Pizza Margherita',
+     price: 25.00,
+     category: 'Pizzas'
+   });
+   ```
+
+## 9. Configurar regras de segurança
 
 ### Firestore Rules:
 ```
@@ -121,7 +147,7 @@ service firebase.storage {
 }
 ```
 
-## 9. Testar
+## 10. Testar
 
 1. Preencha as credenciais em `assets/firebase-config.js`
 2. Abra `http://localhost:8000/login.html`
@@ -129,7 +155,7 @@ service firebase.storage {
 4. Acesse admin e salve um item do cardápio
 5. Verifique se aparece no cardápio público
 
-## Limitações do plano gratuito
+## 11. Limitações do plano gratuito
 
 - **Authentication**: Ilimitado
 - **Firestore**: 1GB armazenamento, 50K leituras/dia

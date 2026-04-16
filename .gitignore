@@ -8,3 +8,11 @@ Thumbs.db
 # Local environment overrides
 .env
 .env.*
+
+# Dependencies
+node_modules/
+
+# Firebase Admin local secrets
+*serviceAccount*.json
+firebase-adminsdk-*.json
+doceria-*-firebase-adminsdk-*.json

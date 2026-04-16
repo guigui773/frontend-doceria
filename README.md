@@ -30,22 +30,51 @@ Abra `index.html` no navegador ou sirva a pasta com um servidor estático.
 3. Em `Build and deployment`, escolha `Deploy from a branch`.
 4. Selecione a branch `main` e a pasta `/ (root)`.
 
-## Configuração do Firebase
+## Configuração do Firebase com GitHub OAuth
 
-1. Crie um projeto no [Firebase Console](https://console.firebase.google.com/)
-2. Habilite Authentication com GitHub provider
-3. Habilite Firestore Database
-4. Habilite Storage
-5. Edite `assets/firebase-config.js` com suas credenciais do Firebase
+📚 **Guias Disponíveis:**
+- 🚀 [QUICK_START.md](QUICK_START.md) - Setup rápido em 7 minutos
+- 📋 [GITHUB_OAUTH_SETUP.md](GITHUB_OAUTH_SETUP.md) - Guia completo e detalhado
+- ✅ [verify-setup.html](verify-setup.html) - Página para verificar a integração
 
-### Configuração do GitHub OAuth no Firebase
+### Setup Rápido (7 minutos)
 
-1. No Firebase Console > Authentication > Sign-in method
-2. Habilite "GitHub"
-3. Crie uma OAuth App no GitHub:
-   - Settings > Developer settings > OAuth Apps
-   - **Homepage URL**: `http://localhost:8000` (desenvolvimento)
-   - **Authorization callback URL**: `https://YOUR_PROJECT.firebaseapp.com/__/auth/handler`
-4. Cole Client ID e Client Secret no Firebase
+1. **Crie um projeto no [Firebase Console](https://console.firebase.google.com/)**
+   - Nome: `la-mafia-dolci`
 
-Sem preencher `assets/firebase-config.js`, o site ainda consegue abrir o cardápio base, mas a persistência continua limitada ao navegador local.
+2. **Crie uma OAuth App no GitHub** ([GitHub Developer Settings](https://github.com/settings/developers))
+   - Copie: **Client ID** e **Client Secret**
+
+3. **Configure GitHub OAuth no Firebase**
+   - Firebase Console > Authentication > Sign-in method
+   - Habilite "GitHub" e cole as credenciais do GitHub
+   - Copie a **Authorization callback URL** fornecida
+
+4. **Complete a OAuth App no GitHub**
+   - Cole a Authorization callback URL do Firebase
+
+5. **Obtenha credenciais do Firebase**
+   - Firebase Console > ⚙️ > Project settings
+   - Copie as 6 credenciais do app web
+
+6. **Atualize `assets/firebase-config.js`** com as credenciais
+
+7. **Teste localmente**
+   - Execute: `start-server.bat` (Windows) ou `python -m http.server 8000`
+   - Abra: [verify-setup.html](verify-setup.html)
+
+### Funcionalidades Habilitadas
+
+Após configurar, você terá:
+- ✅ **Login com GitHub** em `/login.html`
+- ✅ **Persistência no Firestore** (cardápio, pedidos)
+- ✅ **Upload de imagens** no Cloud Storage
+- ✅ **Painel administrativo** em `/admin.html`
+- ✅ **Acompanhamento de pedidos** em `/orders.html`
+
+### Modo Offline
+
+Sem preencher `assets/firebase-config.js`, o site ainda consegue:
+- Abrir o cardápio base (`data/menu.json`)
+- Salvar dados localmente no navegador
+- Funcionar completamente offline em GitHub Pages

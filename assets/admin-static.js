@@ -195,8 +195,8 @@
         var email = adminUsernameInput.value.trim();
         var password = adminPasswordInput.value.trim();
 
-        if (!email || !password) {
-            showFeedback("Informe e-mail e senha para salvar o acesso.", "error");
+        if (!email) {
+            showFeedback("Informe um e-mail para salvar o acesso.", "error");
             return;
         }
 
@@ -210,6 +210,7 @@
             return;
         }
 
+        adminPasswordInput.value = "";
         showFeedback("Dados do administrador atualizados com sucesso.", "success");
     }
 
